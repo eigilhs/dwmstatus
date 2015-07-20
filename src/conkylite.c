@@ -13,25 +13,22 @@
 #include "conkylite.h"
 
 static volatile sig_atomic_t sig_status;
-static XTextProperty name;
 
 int main(void)
 {
   struct info s;
   struct conky_monitor *monitors;
   unsigned char status[256];
+  XTextProperty xtp = {status, XA_STRING, 8, 0};
   int nt;
   info_malloc(&s);
   signal(SIGINT, catch_sigint);
-
-  name.value = status;
-  name.format = 8;
-  name.encoding = XA_STRING;
 
   update(&s);
   nt = start_monitors(&s, &monitors);
   while (!sig_status) {
     update(&s);
+    set_root_name(&s, xtp);
     sleep(INTERVAL);
   }
   
@@ -48,12 +45,11 @@ static void update(struct info *s)
   get_battery_capacity(s);
   get_cpu_usage(s);
   get_time(s);
-  set_root_name(s);
 }
 
-static void set_root_name(struct info *s)
+static void set_root_name(struct info *s, XTextProperty xtp)
 {
-  int n = snprintf((char *)name.value, 256, "%u / %u / %u / %u :: %d / "
+  int n = snprintf((char *)xtp.value, 256, "%u / %u / %u / %u :: %d / "
                    "%d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s",
                    s->cpu->prct[0], s->cpu->prct[1], s->cpu->prct[2],
                    s->cpu->prct[3], s->temp[0], s->temp[1], s->temp[2],
@@ -63,8 +59,8 @@ static void set_root_name(struct info *s)
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
-  name.nitems = n;
-  XSetTextProperty(dpy, root, &name, XA_WM_NAME);
+  xtp.nitems = n;
+  XSetTextProperty(dpy, root, &xtp, XA_WM_NAME);
   XCloseDisplay(dpy);
 }
 

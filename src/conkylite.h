@@ -36,4 +36,4 @@ static void stop_monitors(struct conky_monitor *, int);
 static void update(struct info *);
 static void info_malloc(struct info *);
 static void info_free(struct info *);
-static void set_root_name(struct info *);
+static void set_root_name(struct info *, XTextProperty);
