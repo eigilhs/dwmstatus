@@ -13,21 +13,18 @@
 #include "conkylite.h"
 
 static volatile sig_atomic_t sig_status;
-static Display *dpy;
-static int screen;
-static Window root;
 static XTextProperty name;
-
 
 int main(void)
 {
   struct info s;
   struct conky_monitor *monitors;
+  unsigned char status[256];
   int nt;
   info_malloc(&s);
   signal(SIGINT, catch_sigint);
 
-  name.value = malloc(sizeof(unsigned char) * 256);
+  name.value = status;
   name.format = 8;
   name.encoding = XA_STRING;
 
@@ -35,11 +32,10 @@ int main(void)
   nt = start_monitors(&s, &monitors);
   while (!sig_status) {
     update(&s);
-    sleep(1);
+    sleep(INTERVAL);
   }
   
   stop_monitors(monitors, nt);
-  free(name.value);
   info_free(&s);
   return 0;
 }
@@ -64,9 +60,9 @@ static void set_root_name(struct info *s)
                    (s->mem[0] - s->mem[1]) / (float) 0x100000, s->winfo->b.essid,
                    (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32,
                    s->ba_status, s->ba_capacity, s->time);
-  dpy = XOpenDisplay(NULL);
-  screen = DefaultScreen(dpy);
-  root = RootWindow(dpy, screen);
+  Display *dpy = XOpenDisplay(NULL);
+  int screen = DefaultScreen(dpy);
+  Window root = RootWindow(dpy, screen);
   name.nitems = n;
   XSetTextProperty(dpy, root, &name, XA_WM_NAME);
   XCloseDisplay(dpy);

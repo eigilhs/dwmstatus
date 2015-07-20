@@ -6,3 +6,4 @@
 #define AC   "/sys/class/power_supply/AC/"
 
 #define WIFACE "wlan0"
+#define INTERVAL 1
