@@ -1,6 +1,6 @@
 # Conkylite
 
-Small daemon made for updating the [dwm](http://dwm.suckless.org/)
+Small daemon for updating the [dwm](http://dwm.suckless.org/)
 status bar, inspired by [conky](https://github.com/brndnmtthws/conky)'s
 "out to console" mode. Beware of absolute paths to stuff in `/proc`
 and `/sys`, assumptions on CPU core count, and use of the `MemAvailable`
