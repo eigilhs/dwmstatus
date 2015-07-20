@@ -5,10 +5,19 @@
 #include <pthread.h>
 #include <iwlib.h>
 #include <libudev.h>
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
+#include "config.h"
 #include "conkylite.h"
 
 static volatile sig_atomic_t sig_status;
+static Display *dpy;
+static int screen;
+static Window root;
+static XTextProperty name;
+
 
 int main(void)
 {
@@ -17,13 +26,20 @@ int main(void)
   int nt;
   info_malloc(&s);
   signal(SIGINT, catch_sigint);
+
+  name.value = malloc(sizeof(unsigned char) * 256);
+  name.format = 8;
+  name.encoding = XA_STRING;
+
   update(&s);
   nt = start_monitors(&s, &monitors);
   while (!sig_status) {
     update(&s);
     sleep(1);
   }
+  
   stop_monitors(monitors, nt);
+  free(name.value);
   info_free(&s);
   return 0;
 }
@@ -36,18 +52,24 @@ static void update(struct info *s)
   get_battery_capacity(s);
   get_cpu_usage(s);
   get_time(s);
-  print(s);
+  set_root_name(s);
 }
 
-static void print(struct info *s)
+static void set_root_name(struct info *s)
 {
-  printf("%u / %u / %u / %u :: %d / %d / %d C :: %.2f G :: %s %llu :: "
-         "%c %s %% :: %s\n", s->cpu->prct[0], s->cpu->prct[1],
-         s->cpu->prct[2], s->cpu->prct[3], s->temp[0], s->temp[1], s->temp[2],
-         (s->mem[0] - s->mem[1]) / (float) 0x100000, s->winfo->b.essid,
-         (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32,
-         s->ba_status, s->ba_capacity, s->time);
-  fflush(stdout);
+  int n = snprintf((char *)name.value, 256, "%u / %u / %u / %u :: %d / "
+                   "%d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s",
+                   s->cpu->prct[0], s->cpu->prct[1], s->cpu->prct[2],
+                   s->cpu->prct[3], s->temp[0], s->temp[1], s->temp[2],
+                   (s->mem[0] - s->mem[1]) / (float) 0x100000, s->winfo->b.essid,
+                   (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32,
+                   s->ba_status, s->ba_capacity, s->time);
+  dpy = XOpenDisplay(NULL);
+  screen = DefaultScreen(dpy);
+  root = RootWindow(dpy, screen);
+  name.nitems = n;
+  XSetTextProperty(dpy, root, &name, XA_WM_NAME);
+  XCloseDisplay(dpy);
 }
 
 static void info_malloc(struct info *s)

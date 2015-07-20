@@ -13,7 +13,7 @@ def options(opt):
 def configure(ctx):
     from waflib.Tools.compiler_c import c_compiler
     c_compiler['linux'] = ['clang', 'gcc', 'icc']
-    libs = ['iw', 'udev', 'pthread']
+    libs = ['iw', 'udev', 'pthread', 'X11']
     ctx.env.CFLAGS = ['-Wall', '-Wunused', '-Ofast']
     ctx.load('compiler_c')
     ctx.check_cc(msg='Testing compiler', fragment="int main() { return 0; }\n", execute=True)

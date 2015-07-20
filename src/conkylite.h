@@ -1,12 +1,3 @@
-#define STAT "/proc/stat"
-#define LOAD "/proc/loadavg"
-#define MEM  "/proc/meminfo"
-#define TEMP "/sys/class/hwmon/"
-#define BATT "/sys/class/power_supply/BAT0/"
-#define AC   "/sys/class/power_supply/AC/"
-
-#define WIFACE "wlan0"
-
 struct info {
   struct wireless_info *winfo;
   struct cpu *cpu;
@@ -37,7 +28,6 @@ static void get_mem(struct info *);
 static void get_wireless(struct info *);
 static void get_battery_capacity(struct info *);
 static void get_battery_status(struct info *);
-static void print(struct info *);
 static void catch_sigint(int);
 static void battery_cleanup(void *);
 static void *battery_status_monitor_thread(void *);
@@ -46,3 +36,4 @@ static void stop_monitors(struct conky_monitor *, int);
 static void update(struct info *);
 static void info_malloc(struct info *);
 static void info_free(struct info *);
+static void set_root_name(struct info *);
