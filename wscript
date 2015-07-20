@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 APPNAME = 'conkylite'
 VERSION = '0.0'
@@ -8,7 +8,6 @@ out = 'build'
 
 def options(opt):
     opt.load('compiler_c gnu_dirs')
-
 
 def configure(ctx):
     from waflib.Tools.compiler_c import c_compiler
@@ -25,4 +24,3 @@ def build(ctx):
                 includes='.',
                 target='conkylite',
                 use='L')
-

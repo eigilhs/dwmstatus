@@ -1,10 +1,11 @@
 # Conkylite
 
 Lite version of [conky](https://github.com/brndnmtthws/conky),
-made for updating dwm status bar. Beware of absolute paths
-to stuff in `/proc` and `/sys`, assumptions of CPU core count,
-and use of the `MemAvailable` stat which is only present on
-Linux >= 3.14. Probably only works on my machine.
+made for updating [dwm](http://dwm.suckless.org/) status bar.
+Beware of absolute paths to stuff in `/proc` and `/sys`,
+assumptions on CPU core count, and use of the `MemAvailable`
+stat which is only present on Linux >= 3.14. Probably only
+works on my machine.
 
 ## Dependencies
 Depends on development files for `libiw`, `libudev`, `libx11`,
