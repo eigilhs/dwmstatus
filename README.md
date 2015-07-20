@@ -17,4 +17,4 @@ and on `python >= 2.6` for `waf`.
 3. `# ./waf install`
 
 ## Running
-Put `conkylite` in your `.xinitrc`.
+Put `conkylite &` in your `.xinitrc`.
