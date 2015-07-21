@@ -84,7 +84,7 @@ static void get_cpu_usage(struct info *s)
   for (i = 0; i < CL_CPU_COUNT + 1; i++) {
     ioWait = irq = softIrq = steal = guest = guestnice = 0;
     if (fp) {
-      fseek(fp, 5, 1);
+      fseek(fp, 5, SEEK_CUR);
       fgets(tmp, 255, fp);
       sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu "
              "%llu %llu %llu", &usertime, &nicetime, &systemtime,
@@ -116,25 +116,28 @@ static void get_cpu_usage(struct info *s)
 
 static void get_battery_capacity(struct info *s)
 {
-  FILE *fp = fopen(CL_BATT "capacity", "r");
-  if (fp) {
-    fscanf(fp, "%3s", s->ba_capacity);
-    fclose(fp);
+  int fd = open(CL_BATT "capacity", O_RDONLY);
+  int n = 0;
+  if (fd != -1) {
+    n = read(fd, s->ba_capacity, 3);
+    close(fd);
   }
+  s->ba_capacity[n] = 0;
 }
 
 static void get_battery_status(struct info *s)
 {
-  FILE *fp = fopen(CL_BATT "status", "r");
+  int fd = open(CL_BATT "status", O_RDONLY);
   char c = 'U';
-  if (fp) {
-    s->ba_status = c = fgetc(fp);
-    fclose(fp);
+  if (fd != -1) {
+    read(fd, &c, 1);
+    close(fd);
   }
   if (c == 'U') {
-    fp = fopen(CL_AC "online", "r");
-    if (fp) {
-      switch (fgetc(fp)) {
+    fd = open(CL_AC "online", O_RDONLY);
+    if (fd != -1) {
+      read(fd, &c, 1);
+      switch (c) {
       case 49:                  /* '1' - on AC */
         c = 'A';
         break;
@@ -142,7 +145,7 @@ static void get_battery_status(struct info *s)
         c = 'D';
         break;
       }
-      fclose(fp);
+      close(fd);
     }
   }
   s->ba_status = c;
@@ -150,28 +153,32 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
-  FILE *fp = fopen(CL_MEM, "r");
-  if (fp) {
-    fseek(fp, 14, 0);
-    fscanf(fp, "%d", &s->mem_total);
-    fseek(fp, 46, 1);
-    fscanf(fp, "%d", &s->mem_avail);
-    fclose(fp);
+  int fd = open(CL_MEM, O_RDONLY), n = 0;
+  char mema[10], memt[10];
+  if (fd != -1) {
+    lseek(fd, 15, SEEK_CUR);
+    n = read(fd, memt, 9);
+    memt[n] = 0;
+    lseek(fd, 49, SEEK_CUR);
+    read(fd, mema, 9);
+    mema[n] = 0;
+    close(fd);
   }
+  s->mem_total = atoi(memt);
+  s->mem_avail = atoi(mema);
 }
 
 static void get_temp(struct info *s)
 {
-  unsigned long t = 0;
-  int i;
-  FILE *fp;
+  int i, fd;
+  char tmp[7] = "0";
   for (i = 0; i < CL_TEMP_COUNT; i++) {
-    fp = fopen(CL_TEMP_SENSORS[i], "r");
-    if (fp) {
-      fscanf(fp, "%lu", &t);
-      fclose(fp);
+    fd = open(CL_TEMP_SENSORS[i], O_RDONLY);
+    if (fd != -1) {
+      read(fd, tmp, 6);
+      close(fd);
     }
-    s->temp[i] = t * 0x418938 >> 32;
+    s->temp[i] = atol(tmp) * 0x418938 >> 32;
   }
 }
 
