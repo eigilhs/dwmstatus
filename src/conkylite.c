@@ -119,10 +119,10 @@ static void get_battery_capacity(struct info *s)
   int fd = open(CL_BATT "capacity", O_RDONLY);
   int n = 0;
   if (fd != -1) {
-    n = read(fd, s->ba_capacity, 3);
+    n = read(fd, s->ba_capacity, 4);
     close(fd);
   }
-  s->ba_capacity[n] = 0;
+  s->ba_capacity[n-1] = 0;
 }
 
 static void get_battery_status(struct info *s)
@@ -153,17 +153,16 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
-  int fd = open(CL_MEM, O_RDONLY), n = 0;
+  int fd = open(CL_MEM, O_RDONLY);
   char mema[10], memt[10];
   if (fd != -1) {
     lseek(fd, 15, SEEK_CUR);
-    n = read(fd, memt, 9);
-    memt[n] = 0;
+    read(fd, memt, 9);
     lseek(fd, 49, SEEK_CUR);
     read(fd, mema, 9);
-    mema[n] = 0;
     close(fd);
   }
+  mema[9] = memt[9] = 0;
   s->mem_total = atoi(memt);
   s->mem_avail = atoi(mema);
 }
@@ -171,13 +170,14 @@ static void get_mem(struct info *s)
 static void get_temp(struct info *s)
 {
   int i, fd;
-  char tmp[7] = "0";
+  char tmp[7];
   for (i = 0; i < CL_TEMP_COUNT; i++) {
     fd = open(CL_TEMP_SENSORS[i], O_RDONLY);
     if (fd != -1) {
       read(fd, tmp, 6);
       close(fd);
     }
+    tmp[6] = 0;
     s->temp[i] = atol(tmp) * 0x418938 >> 32;
   }
 }
