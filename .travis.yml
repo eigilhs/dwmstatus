@@ -1,0 +1,12 @@
+language: c
+
+env:
+  - DEBUG=True
+  - DEBUG=False
+
+compiler:
+  - clang
+  - gcc
+
+script:
+  - ./waf configure build --debug=$DEBUG
