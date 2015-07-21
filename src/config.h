@@ -1,10 +1,10 @@
-#define STAT "/proc/stat"
-#define MEM  "/proc/meminfo"
-#define BATT "/sys/class/power_supply/BAT0/"
-#define AC   "/sys/class/power_supply/AC/"
+#define CL_STAT "/proc/stat"
+#define CL_MEM  "/proc/meminfo"
+#define CL_BATT "/sys/class/power_supply/BAT0/"
+#define CL_AC   "/sys/class/power_supply/AC/"
 
-#define WIFACE "wlan0"
-#define INTERVAL 1              /* Update every INTERVAL seconds */
+#define CL_WIFACE "wlan0"
+#define CL_INTERVAL 1           /* Update every INTERVAL seconds */
 
 #define CL_TEMP_COUNT 3
 static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_input",
@@ -13,8 +13,8 @@ static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_in
 
 #define CL_TIME_FORMAT "%m-%V-%d %H:%M:%S"
 
-#define FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s"
-#define ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,       \
+#define CL_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s"
+#define CL_ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,       \
     s->temp[0], s->temp[1], s->temp[2],                                            \
     (s->mem_total - s->mem_avail) / (float) 0x100000,                              \
     s->winfo->b.essid, (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32, \

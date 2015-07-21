@@ -29,7 +29,7 @@ int main(void)
   while (!sig_status) {
     update(&s);
     set_root_name(&s, xtp);
-    sleep(INTERVAL);
+    sleep(CL_INTERVAL);
   }
   
   stop_monitors(monitors, nt);
@@ -49,7 +49,7 @@ static void update(struct info *s)
 
 static void set_root_name(struct info *s, XTextProperty xtp)
 {
-  int n = snprintf((char *)xtp.value, 256, FORMATSTRING, ARGS);
+  int n = snprintf((char *)xtp.value, 256, CL_FORMATSTRING, CL_ARGS);
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
@@ -80,7 +80,7 @@ static void get_cpu_usage(struct info *s)
   unsigned long long nonidlealltime, prevnonidle, previdle, prevtotaltime;
   int i;
   char tmp[256];
-  FILE *fp = fopen(STAT, "r");
+  FILE *fp = fopen(CL_STAT, "r");
   for (i = 0; i < CL_CPU_COUNT + 1; i++) {
     ioWait = irq = softIrq = steal = guest = guestnice = 0;
     if (fp) {
@@ -90,7 +90,7 @@ static void get_cpu_usage(struct info *s)
              "%llu %llu %llu", &usertime, &nicetime, &systemtime,
              &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
     } else {
-      fprintf(stderr, "Couldn't read %s\n", STAT);
+      fprintf(stderr, "Couldn't read %s\n", CL_STAT);
       break;
     }
     systemalltime = systemtime + irq + softIrq;
@@ -116,7 +116,7 @@ static void get_cpu_usage(struct info *s)
 
 static void get_battery_capacity(struct info *s)
 {
-  FILE *fp = fopen(BATT "capacity", "r");
+  FILE *fp = fopen(CL_BATT "capacity", "r");
   if (fp) {
     fscanf(fp, "%3s", s->ba_capacity);
     fclose(fp);
@@ -125,14 +125,14 @@ static void get_battery_capacity(struct info *s)
 
 static void get_battery_status(struct info *s)
 {
-  FILE *fp = fopen(BATT "status", "r");
+  FILE *fp = fopen(CL_BATT "status", "r");
   char c = 'U';
   if (fp) {
     s->ba_status = c = fgetc(fp);
     fclose(fp);
   }
   if (c == 'U') {
-    fp = fopen(AC "online", "r");
+    fp = fopen(CL_AC "online", "r");
     if (fp) {
       switch (fgetc(fp)) {
       case 49:                  /* '1' - on AC */
@@ -150,7 +150,7 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
-  FILE *fp = fopen(MEM, "r");
+  FILE *fp = fopen(CL_MEM, "r");
   if (fp) {
     fseek(fp, 14, 0);
     fscanf(fp, "%d", &s->mem_total);
@@ -186,7 +186,7 @@ static void get_wireless(struct info *s)
 {
   struct iwreq wrq;
   int skfd = iw_sockets_open();
-  char iface[] = WIFACE;
+  char iface[] = CL_WIFACE;
   wrq.u.essid.pointer = (caddr_t) s->winfo->b.essid;
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;
