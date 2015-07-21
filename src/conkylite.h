@@ -1,24 +1,29 @@
-struct info {
-  struct wireless_info *winfo;
-  struct cpu *cpu;
-  int *mem;
-  int *temp;
-  char *time;
-  char *ba_capacity;
-  char ba_status;
-};
+#ifndef CL_CPU_COUNT
+#define CL_CPU_COUNT 2
+#endif
 
 struct cpu {
-  unsigned long long idle[4];
-  unsigned long long nonidle[4];
-  unsigned int prct[4];
+  unsigned long long idle;
+  unsigned long long nonidle;
+  unsigned int prct;
+};
+
+struct info {
+  struct wireless_info *winfo;
+  struct cpu cpu[CL_CPU_COUNT+1];
+  unsigned int mem_total;
+  unsigned int mem_avail;
+  unsigned int temp[CL_TEMP_COUNT];
+  char time[128];
+  char ba_capacity[4];
+  char ba_status;
 };
 
 struct conky_monitor {
   struct info *info;
-  pthread_t thread;
-  struct udev_monitor *mon;
   struct udev *udev;
+  struct udev_monitor *mon;
+  pthread_t thread;
 };
 
 static void get_time(struct info *);
@@ -34,6 +39,6 @@ static void *battery_status_monitor_thread(void *);
 static int start_monitors(struct info *, struct conky_monitor **);
 static void stop_monitors(struct conky_monitor *, int);
 static void update(struct info *);
-static void info_malloc(struct info *);
+static void info_create(struct info *);
 static void info_free(struct info *);
 static void set_root_name(struct info *, XTextProperty);

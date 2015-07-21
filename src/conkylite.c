@@ -21,7 +21,7 @@ int main(void)
   unsigned char status[256];
   XTextProperty xtp = {status, XA_STRING, 8, 0};
   int nt;
-  info_malloc(&s);
+  info_create(&s);
   signal(SIGINT, catch_sigint);
 
   update(&s);
@@ -49,13 +49,7 @@ static void update(struct info *s)
 
 static void set_root_name(struct info *s, XTextProperty xtp)
 {
-  int n = snprintf((char *)xtp.value, 256, "%u / %u / %u / %u :: %d / "
-                   "%d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s",
-                   s->cpu->prct[0], s->cpu->prct[1], s->cpu->prct[2],
-                   s->cpu->prct[3], s->temp[0], s->temp[1], s->temp[2],
-                   (s->mem[0] - s->mem[1]) / (float) 0x100000, s->winfo->b.essid,
-                   (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32,
-                   s->ba_status, s->ba_capacity, s->time);
+  int n = snprintf((char *)xtp.value, 256, FORMATSTRING, ARGS);
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
@@ -64,26 +58,18 @@ static void set_root_name(struct info *s, XTextProperty xtp)
   XCloseDisplay(dpy);
 }
 
-static void info_malloc(struct info *s)
+static void info_create(struct info *s)
 {
   s->winfo = malloc(sizeof(struct wireless_info));
-  s->mem = malloc(sizeof(int) * 2);
-  s->temp = malloc(sizeof(int) * 3);
-  s->time = malloc(sizeof(char) * 18);
-  s->ba_capacity = malloc(sizeof(char) * 4);
   s->ba_status = 'U';
-  s->cpu = malloc(sizeof(struct cpu));
-  memset(s->cpu, 0, sizeof(struct cpu));
+  int i;
+  for (i = 0; i < CL_CPU_COUNT+1; i++)
+    s->cpu[i].idle = s->cpu[i].nonidle = 0;
 }
 
 static void info_free(struct info *s)
 {
   free(s->winfo);
-  free(s->mem);
-  free(s->temp);
-  free(s->time);
-  free(s->ba_capacity);
-  free(s->cpu);
 }
 
 static void get_cpu_usage(struct info *s)
@@ -92,17 +78,16 @@ static void get_cpu_usage(struct info *s)
   unsigned long long ioWait, irq, softIrq, steal, guest, guestnice;
   unsigned long long systemalltime, idlealltime, totaltime, virtalltime;
   unsigned long long nonidlealltime, prevnonidle, previdle, prevtotaltime;
-  int i, cpuid;
+  int i;
   char tmp[256];
   FILE *fp = fopen(STAT, "r");
-  if (fp)
-    fgets(tmp, 255, fp);
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < CL_CPU_COUNT + 1; i++) {
     ioWait = irq = softIrq = steal = guest = guestnice = 0;
     if (fp) {
+      fseek(fp, 5, 1);
       fgets(tmp, 255, fp);
-      sscanf(tmp, "cpu%d %llu %llu %llu %llu %llu %llu %llu "
-             "%llu %llu %llu", &cpuid, &usertime, &nicetime, &systemtime,
+      sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu "
+             "%llu %llu %llu", &usertime, &nicetime, &systemtime,
              &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
     } else {
       fprintf(stderr, "Couldn't read %s\n", STAT);
@@ -114,17 +99,16 @@ static void get_cpu_usage(struct info *s)
     nonidlealltime = usertime + nicetime + systemalltime + steal + virtalltime;
     totaltime = nonidlealltime + idlealltime;
 
-
-    prevnonidle = s->cpu->nonidle[i];
-    previdle = s->cpu->idle[i];
+    prevnonidle = s->cpu[i].nonidle;
+    previdle = s->cpu[i].idle;
     prevtotaltime = prevnonidle + previdle;
     if (totaltime == prevtotaltime)
       break;
-    s->cpu->prct[i] = (totaltime + previdle - (prevtotaltime + idlealltime))
+    s->cpu[i].prct = (totaltime + previdle - (prevtotaltime + idlealltime))
       * 100 / (totaltime - prevtotaltime);
 
-    s->cpu->nonidle[i] = nonidlealltime;
-    s->cpu->idle[i] = idlealltime;
+    s->cpu[i].nonidle = nonidlealltime;
+    s->cpu[i].idle = idlealltime;
   }
   if (fp)
     fclose(fp);
@@ -134,7 +118,7 @@ static void get_battery_capacity(struct info *s)
 {
   FILE *fp = fopen(BATT "capacity", "r");
   if (fp) {
-    fscanf(fp, "%s", s->ba_capacity);
+    fscanf(fp, "%3s", s->ba_capacity);
     fclose(fp);
   }
 }
@@ -169,41 +153,33 @@ static void get_mem(struct info *s)
   FILE *fp = fopen(MEM, "r");
   if (fp) {
     fseek(fp, 14, 0);
-    fscanf(fp, "%d", &s->mem[0]);
+    fscanf(fp, "%d", &s->mem_total);
     fseek(fp, 46, 1);
-    fscanf(fp, "%d", &s->mem[1]);
+    fscanf(fp, "%d", &s->mem_avail);
     fclose(fp);
   }
 }
 
 static void get_temp(struct info *s)
 {
-  unsigned long t0 = 0, t1 = 0, t2 = 0;
-  FILE *fp = fopen(TEMP "hwmon0/temp1_input", "r");
-  if (fp) {
-    fscanf(fp, "%lu", &t0);
-    fclose(fp);
+  unsigned long t = 0;
+  int i;
+  FILE *fp;
+  for (i = 0; i < CL_TEMP_COUNT; i++) {
+    fp = fopen(CL_TEMP_SENSORS[i], "r");
+    if (fp) {
+      fscanf(fp, "%lu", &t);
+      fclose(fp);
+    }
+    s->temp[i] = t * 0x418938 >> 32;
   }
-  fp = fopen(TEMP "hwmon2/temp2_input", "r");
-  if (fp) {
-    fscanf(fp, "%lu", &t1);
-    fclose(fp);
-  }
-  fp = fopen(TEMP "hwmon2/temp4_input", "r");
-  if (fp) {
-    fscanf(fp, "%lu", &t2);
-    fclose(fp);
-  }
-  s->temp[0] = t0 * 0x418938 >> 32;
-  s->temp[1] = t1 * 0x418938 >> 32;
-  s->temp[2] = t2 * 0x418938 >> 32;
 }
 
 static void get_time(struct info *s)
 {
   time_t t;
   time(&t);
-  strftime(s->time, 18, "%m-%V-%d %H:%M:%S", localtime(&t));
+  strftime(s->time, 128, CL_TIME_FORMAT, localtime(&t));
 }
 
 static void get_wireless(struct info *s)
