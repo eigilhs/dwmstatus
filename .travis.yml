@@ -1,5 +1,9 @@
 language: c
 
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libiw-dev libudev-dev libx11-dev
+
 env:
   - DEBUG=True
   - DEBUG=False
