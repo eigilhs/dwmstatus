@@ -6,7 +6,7 @@ status bar, inspired by [conky](https://github.com/brndnmtthws/conky)'s
 
 ## Dependencies
 Depends on development files for `libiw`, `libudev`, `libx11`,
-on `python >= 2.6` for `waf`.
+and on `python >= 2.6` for `waf`.
 
 ## Installing
 1. Change `config.h` to match your system
