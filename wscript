@@ -16,7 +16,7 @@ def configure(ctx):
     c_compiler['linux'] = ['clang', 'gcc', 'icc']
     libs = ['iw', 'udev', 'pthread', 'X11']
     ctx.env.CFLAGS = ['-Wall', '-Wunused']
-    if ctx.options.debug:
+    if ctx.options.debug == 'True':
         print('=== DEBUG MODE ===')
         ctx.env.CFLAGS.append('-g')
     else:
