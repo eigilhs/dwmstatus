@@ -18,8 +18,6 @@ int main(void)
 {
   struct info s;
   struct conky_monitor *monitors;
-  unsigned char status[256];
-  XTextProperty xtp = {status, XA_STRING, 8, 0};
   int nt;
   info_create(&s);
   signal(SIGINT, catch_sigint);
@@ -28,7 +26,7 @@ int main(void)
   nt = start_monitors(&s, &monitors);
   while (!sig_status) {
     update(&s);
-    set_root_name(&s, xtp);
+    set_root_name(&s);
     sleep(CL_INTERVAL);
   }
   
@@ -47,14 +45,14 @@ static void update(struct info *s)
   get_time(s);
 }
 
-static void set_root_name(struct info *s, XTextProperty xtp)
+static void set_root_name(struct info *s)
 {
-  int n = snprintf((char *)xtp.value, 256, CL_FORMATSTRING, CL_ARGS);
+  char name[256];
+  snprintf(name, 256, CL_FORMATSTRING, CL_ARGS);
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
-  xtp.nitems = n;
-  XSetTextProperty(dpy, root, &xtp, XA_WM_NAME);
+  XStoreName(dpy, root, name);
   XCloseDisplay(dpy);
 }
 
