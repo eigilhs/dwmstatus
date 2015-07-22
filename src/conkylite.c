@@ -15,6 +15,11 @@
 
 static volatile sig_atomic_t sig_status;
 
+static void catch_sigint(int signo)
+{
+  sig_status = signo;
+}
+
 int main(void)
 {
   struct info s;
@@ -71,6 +76,31 @@ static void info_free(struct info *s)
   free(s->winfo);
 }
 
+static int start_monitors(struct info *s, struct conky_monitor **monitors)
+{
+  int NUMMONS = 1;
+  *monitors = malloc(sizeof(struct conky_monitor) * NUMMONS);
+
+  (*monitors)[0].info = s;
+  if (pthread_create(&(monitors[0]->thread), NULL,
+                     battery_status_monitor_thread,
+                     (void *) monitors[0])) {
+    fprintf(stderr, "Thread creation failed.\n");
+    exit(EXIT_FAILURE);
+  }
+  return NUMMONS;
+}
+
+static void stop_monitors(struct conky_monitor *monitors, int nt)
+{
+  int i;
+  for (i = 0; i < nt; i++) {
+    pthread_cancel(monitors[i].thread);
+    pthread_join(monitors[i].thread, NULL);
+  }
+  free(monitors);
+}
+
 static void extract_cpu_times(char *line, int count, ...)
 {
   va_list args;
@@ -100,7 +130,7 @@ static void extract_cpu_times(char *line, int count, ...)
       va_end(args);
       return;
     case 0:
-      fprintf(stderr, "The CPU times buffer too small!\n");
+      fprintf(stderr, "The CPU times buffer is too small!\n");
       va_end(args);
       return;
     default:
@@ -237,11 +267,6 @@ static void get_wireless(struct info *s)
   }
 }
 
-static void catch_sigint(int signo)
-{
-  sig_status = signo;
-}
-
 static void battery_cleanup(void *v)
 {
   struct conky_monitor *m = (struct conky_monitor *) v;
@@ -286,29 +311,4 @@ static void *battery_status_monitor_thread(void *v)
   }
   pthread_cleanup_pop(NULL);
   return NULL;
-}
-
-static int start_monitors(struct info *s, struct conky_monitor **monitors)
-{
-  int NUMMONS = 1;
-  *monitors = malloc(sizeof(struct conky_monitor) * NUMMONS);
-
-  (*monitors)[0].info = s;
-  if (pthread_create(&(monitors[0]->thread), NULL,
-                     battery_status_monitor_thread,
-                     (void *) monitors[0])) {
-    fprintf(stderr, "Thread creation failed.\n");
-    exit(EXIT_FAILURE);
-  }
-  return NUMMONS;
-}
-
-static void stop_monitors(struct conky_monitor *monitors, int nt)
-{
-  int i;
-  for (i = 0; i < nt; i++) {
-    pthread_cancel(monitors[i].thread);
-    pthread_join(monitors[i].thread, NULL);
-  }
-  free(monitors);
 }
