@@ -42,3 +42,4 @@ static void update(struct info *);
 static void info_create(struct info *);
 static void info_free(struct info *);
 static void set_root_name(struct info *);
+static void extract_cpu_times(char *, int, ...);

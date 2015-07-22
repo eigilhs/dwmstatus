@@ -71,19 +71,19 @@ static void info_free(struct info *s)
   free(s->winfo);
 }
 
-static void cl_extract_cpu_times(char *line, int count, ...)
+static void extract_cpu_times(char *line, int count, ...)
 {
   va_list args;
   static char *stat;
   unsigned long long *cur;
   char num[21];
   int i, j;
-  va_start(args, count);
+
   if (line != NULL)
     stat = line;
-  if (stat == NULL)
-    return;
+  va_start(args, count);
   cur = va_arg(args, unsigned long long *);
+
   for (i = j = 0; j < count; stat++) {
     switch (*stat) {
     case ' ':
@@ -97,8 +97,11 @@ static void cl_extract_cpu_times(char *line, int count, ...)
       num[i] = 0;
       *cur = atol(num);
       stat += 6;
+      va_end(args);
       return;
     case 0:
+      fprintf(stderr, "The CPU times buffer too small!\n");
+      va_end(args);
       return;
     default:
       num[i++] = *stat;
@@ -121,13 +124,11 @@ static void get_cpu_usage(struct info *s)
       read(fd, tmp, 512);
       close(fd);
   }
-  tmp[255] = 0;
+  tmp[511] = 0;
   for (i = 0; i < CL_CPU_COUNT + 1; i++) {
-    /* sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu " */
-    /*        "%llu %llu %llu", &usertime, &nicetime, &systemtime, */
-    /*        &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice); */
-    cl_extract_cpu_times(i == 0 ? tmp : NULL, 10, &usertime, &nicetime, &systemtime,
-                         &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
+    extract_cpu_times(i == 0 ? tmp : NULL, 10, &usertime, &nicetime,
+                      &systemtime, &idletime, &ioWait, &irq, &softIrq,
+                      &steal, &guest, &guestnice);
     systemalltime = systemtime + irq + softIrq;
     virtalltime = guest + guestnice;
     idlealltime = idletime + ioWait;
