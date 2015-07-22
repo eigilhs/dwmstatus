@@ -121,11 +121,8 @@ static void get_cpu_usage(struct info *s)
       read(fd, tmp, 512);
       close(fd);
   }
-  tmp[255] = 0;
+  tmp[511] = 0;
   for (i = 0; i < CL_CPU_COUNT + 1; i++) {
-    /* sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu " */
-    /*        "%llu %llu %llu", &usertime, &nicetime, &systemtime, */
-    /*        &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice); */
     cl_extract_cpu_times(i == 0 ? tmp : NULL, 10, &usertime, &nicetime, &systemtime,
                          &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
     systemalltime = systemtime + irq + softIrq;
