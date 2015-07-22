@@ -13,7 +13,7 @@ static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_in
 
 #define CL_TIME_FORMAT "%m-%V-%d %H:%M:%S"
 
-#define CL_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d C :: %.2f G :: %s %llu :: %c %s %% :: %s"
+#define CL_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d °C :: %.2f G :: %s %llu :: %c %s %% :: %s"
 #define CL_ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,    \
     s->temp[0], s->temp[1], s->temp[2],                                            \
     (s->mem_total - s->mem_avail) / (float) 0x100000,                              \
