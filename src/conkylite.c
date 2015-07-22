@@ -3,6 +3,7 @@
 #include <time.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdarg.h>
 #include <iwlib.h>
 #include <libudev.h>
 #include <X11/Xatom.h>
@@ -18,8 +19,6 @@ int main(void)
 {
   struct info s;
   struct conky_monitor *monitors;
-  unsigned char status[256];
-  XTextProperty xtp = {status, XA_STRING, 8, 0};
   int nt;
   info_create(&s);
   signal(SIGINT, catch_sigint);
@@ -28,7 +27,7 @@ int main(void)
   nt = start_monitors(&s, &monitors);
   while (!sig_status) {
     update(&s);
-    set_root_name(&s, xtp);
+    set_root_name(&s);
     sleep(CL_INTERVAL);
   }
   
@@ -47,14 +46,14 @@ static void update(struct info *s)
   get_time(s);
 }
 
-static void set_root_name(struct info *s, XTextProperty xtp)
+static void set_root_name(struct info *s)
 {
-  int n = snprintf((char *)xtp.value, 256, CL_FORMATSTRING, CL_ARGS);
+  char name[256];
+  snprintf(name, 256, CL_FORMATSTRING, CL_ARGS);
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
-  xtp.nitems = n;
-  XSetTextProperty(dpy, root, &xtp, XA_WM_NAME);
+  XStoreName(dpy, root, name);
   XCloseDisplay(dpy);
 }
 
@@ -72,6 +71,42 @@ static void info_free(struct info *s)
   free(s->winfo);
 }
 
+static void cl_extract_cpu_times(char *line, int count, ...)
+{
+  va_list args;
+  static char *stat;
+  unsigned long long *cur;
+  char num[21];
+  int i, j;
+  va_start(args, count);
+  if (line != NULL)
+    stat = line;
+  if (stat == NULL)
+    return;
+  cur = va_arg(args, unsigned long long *);
+  for (i = j = 0; j < count; stat++) {
+    switch (*stat) {
+    case ' ':
+      num[i] = 0;
+      *cur = atol(num);
+      cur = va_arg(args, unsigned long long *);
+      j++;
+      i = 0;
+      break;
+    case '\n':
+      num[i] = 0;
+      *cur = atol(num);
+      stat += 6;
+      return;
+    case 0:
+      return;
+    default:
+      num[i++] = *stat;
+    }
+  }
+  va_end(args);
+}
+
 static void get_cpu_usage(struct info *s)
 {
   unsigned long long usertime, nicetime, systemtime, idletime;
@@ -79,24 +114,24 @@ static void get_cpu_usage(struct info *s)
   unsigned long long systemalltime, idlealltime, totaltime, virtalltime;
   unsigned long long nonidlealltime, prevnonidle, previdle, prevtotaltime;
   int i;
-  char tmp[256];
-  FILE *fp = fopen(CL_STAT, "r");
+  char tmp[512];
+  int fd = open(CL_STAT, O_RDONLY);
+  if (fd != -1) {
+      lseek(fd, 5, SEEK_CUR);
+      read(fd, tmp, 512);
+      close(fd);
+  }
+  tmp[255] = 0;
   for (i = 0; i < CL_CPU_COUNT + 1; i++) {
-    ioWait = irq = softIrq = steal = guest = guestnice = 0;
-    if (fp) {
-      fseek(fp, 5, 1);
-      fgets(tmp, 255, fp);
-      sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu "
-             "%llu %llu %llu", &usertime, &nicetime, &systemtime,
-             &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
-    } else {
-      fprintf(stderr, "Couldn't read %s\n", CL_STAT);
-      break;
-    }
+    /* sscanf(tmp, "%llu %llu %llu %llu %llu %llu %llu " */
+    /*        "%llu %llu %llu", &usertime, &nicetime, &systemtime, */
+    /*        &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice); */
+    cl_extract_cpu_times(i == 0 ? tmp : NULL, 10, &usertime, &nicetime, &systemtime,
+                         &idletime, &ioWait, &irq, &softIrq, &steal, &guest, &guestnice);
     systemalltime = systemtime + irq + softIrq;
     virtalltime = guest + guestnice;
     idlealltime = idletime + ioWait;
-    nonidlealltime = usertime + nicetime + systemalltime + steal + virtalltime;
+    nonidlealltime = usertime + nicetime + systemalltime + steal + guest + guestnice;
     totaltime = nonidlealltime + idlealltime;
 
     prevnonidle = s->cpu[i].nonidle;
@@ -110,31 +145,32 @@ static void get_cpu_usage(struct info *s)
     s->cpu[i].nonidle = nonidlealltime;
     s->cpu[i].idle = idlealltime;
   }
-  if (fp)
-    fclose(fp);
 }
 
 static void get_battery_capacity(struct info *s)
 {
-  FILE *fp = fopen(CL_BATT "capacity", "r");
-  if (fp) {
-    fscanf(fp, "%3s", s->ba_capacity);
-    fclose(fp);
+  int fd = open(CL_BATT "capacity", O_RDONLY);
+  int n = 0;
+  if (fd != -1) {
+    n = read(fd, s->ba_capacity, 4);
+    close(fd);
   }
+  s->ba_capacity[n-1] = 0;
 }
 
 static void get_battery_status(struct info *s)
 {
-  FILE *fp = fopen(CL_BATT "status", "r");
+  int fd = open(CL_BATT "status", O_RDONLY);
   char c = 'U';
-  if (fp) {
-    s->ba_status = c = fgetc(fp);
-    fclose(fp);
+  if (fd != -1) {
+    read(fd, &c, 1);
+    close(fd);
   }
   if (c == 'U') {
-    fp = fopen(CL_AC "online", "r");
-    if (fp) {
-      switch (fgetc(fp)) {
+    fd = open(CL_AC "online", O_RDONLY);
+    if (fd != -1) {
+      read(fd, &c, 1);
+      switch (c) {
       case 49:                  /* '1' - on AC */
         c = 'A';
         break;
@@ -142,7 +178,7 @@ static void get_battery_status(struct info *s)
         c = 'D';
         break;
       }
-      fclose(fp);
+      close(fd);
     }
   }
   s->ba_status = c;
@@ -150,28 +186,32 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
-  FILE *fp = fopen(CL_MEM, "r");
-  if (fp) {
-    fseek(fp, 14, 0);
-    fscanf(fp, "%d", &s->mem_total);
-    fseek(fp, 46, 1);
-    fscanf(fp, "%d", &s->mem_avail);
-    fclose(fp);
+  int fd = open(CL_MEM, O_RDONLY);
+  char mema[10], memt[10];
+  if (fd != -1) {
+    lseek(fd, 15, SEEK_CUR);
+    read(fd, memt, 9);
+    lseek(fd, 49, SEEK_CUR);
+    read(fd, mema, 9);
+    close(fd);
   }
+  mema[9] = memt[9] = 0;
+  s->mem_total = atoi(memt);
+  s->mem_avail = atoi(mema);
 }
 
 static void get_temp(struct info *s)
 {
-  unsigned long t = 0;
-  int i;
-  FILE *fp;
+  int i, fd;
+  char tmp[7];
   for (i = 0; i < CL_TEMP_COUNT; i++) {
-    fp = fopen(CL_TEMP_SENSORS[i], "r");
-    if (fp) {
-      fscanf(fp, "%lu", &t);
-      fclose(fp);
+    fd = open(CL_TEMP_SENSORS[i], O_RDONLY);
+    if (fd != -1) {
+      read(fd, tmp, 6);
+      close(fd);
     }
-    s->temp[i] = t * 0x418938 >> 32;
+    tmp[6] = 0;
+    s->temp[i] = atol(tmp) * 0x418938 >> 32;
   }
 }
 
