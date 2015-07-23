@@ -1,9 +1,8 @@
-# Conkylite
-[![Travis-CI](https://travis-ci.org/skjvlnd/conkylite.svg?branch=master)](https://travis-ci.org/skjvlnd/conkylite)
+# dwmstatus
+[![Travis-CI](https://travis-ci.org/skjvlnd/dwmstatus.svg?branch=master)](https://travis-ci.org/skjvlnd/dwmstatus)
 
 Small daemon for updating the [dwm](http://dwm.suckless.org/)
-status bar, inspired by [conky](https://github.com/brndnmtthws/conky)'s
-"out to console" mode. Very untested.
+status bar. Very untested.
 
 ## Dependencies
 Depends on development files for `libiw`, `libudev`, `libx11`,
@@ -15,4 +14,4 @@ and on `python >= 2.6` for `waf`.
 3. `# ./waf install`
 
 ## Running
-Put `conkylite &` in your `.xinitrc`.
+Put `dwmstatus &` in your `.xinitrc`.
