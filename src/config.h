@@ -24,8 +24,8 @@
  * the amount of "available" memory.
  *
  * == TEMPERATURE ==
- * The value of the temperature sensors defined in DS_TEMP_SENSORS can be
- * read from info->temp[i] where "i" is the index of the sensor.
+ * Temperatures from any temperature sensors found by ./waf configure
+ * can be read from info->temp[i], where "i" is the index of the sensor.
  *
  * == WIFI ==
  * info->wi_essid holds the current ESSID, and info->wi_bitrate holds the
