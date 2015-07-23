@@ -23,17 +23,17 @@ static void catch_sigint(int signo)
 
 int main(void)
 {
-  struct info s;
+  struct info info;
   struct conky_monitor *monitors;
   int nt;
-  info_create(&s);
+  info_create(&info);
   signal(SIGINT, catch_sigint);
 
-  update(&s);
-  nt = start_monitors(&s, &monitors);
+  update(&info);
+  nt = start_monitors(&info, &monitors);
   while (!sig_status) {
-    update(&s);
-    set_root_name(&s);
+    update(&info);
+    set_root_name(&info);
     sleep(DS_INTERVAL);
   }
   
@@ -41,17 +41,17 @@ int main(void)
   return 0;
 }
 
-static void update(struct info *s)
+static void update(struct info *info)
 {
-  get_temp(s);
-  get_mem(s);
-  get_wireless(s);
-  get_battery_capacity(s);
-  get_cpu_usage(s);
-  get_time(s);
+  get_temp(info);
+  get_mem(info);
+  get_wireless(info);
+  get_battery_capacity(info);
+  get_cpu_usage(info);
+  get_time(info);
 }
 
-static void set_root_name(struct info *s)
+static void set_root_name(struct info *info)
 {
   char name[256];
   snprintf(name, 256, DS_FORMATSTRING, DS_ARGS);
@@ -60,20 +60,20 @@ static void set_root_name(struct info *s)
   XCloseDisplay(dpy);
 }
 
-static void info_create(struct info *s)
+static void info_create(struct info *info)
 {
-  s->ba_status = 'U';
+  info->ba_status = 'U';
   int i;
   for (i = 0; i < DS_CPU_COUNT+1; i++)
-    s->cpu[i].idle = s->cpu[i].nonidle = 0;
+    info->cpu[i].idle = info->cpu[i].nonidle = 0;
 }
 
-static int start_monitors(struct info *s, struct conky_monitor **monitors)
+static int start_monitors(struct info *info, struct conky_monitor **monitors)
 {
   int NUMMONS = 1;
   *monitors = malloc(sizeof(struct conky_monitor) * NUMMONS);
 
-  (*monitors)[0].info = s;
+  (*monitors)[0].info = info;
   if (pthread_create(&(monitors[0]->thread), NULL,
                      battery_status_monitor_thread,
                      (void *) monitors[0])) {
@@ -132,7 +132,7 @@ static void extract_cpu_times(char *line, int count, ...)
   va_end(args);
 }
 
-static void get_cpu_usage(struct info *s)
+static void get_cpu_usage(struct info *info)
 {
   unsigned long long usertime, nicetime, systemtime, idletime;
   unsigned long long ioWait, irq, softIrq, steal, guest, guestnice;
@@ -157,31 +157,31 @@ static void get_cpu_usage(struct info *s)
     nonidlealltime = usertime + nicetime + systemalltime + steal + virtalltime;
     totaltime = nonidlealltime + idlealltime;
 
-    prevnonidle = s->cpu[i].nonidle;
-    previdle = s->cpu[i].idle;
+    prevnonidle = info->cpu[i].nonidle;
+    previdle = info->cpu[i].idle;
     prevtotaltime = prevnonidle + previdle;
     if (totaltime == prevtotaltime)
       break;
-    s->cpu[i].prct = (totaltime + previdle - (prevtotaltime + idlealltime))
+    info->cpu[i].prct = (totaltime + previdle - (prevtotaltime + idlealltime))
       * 100 / (totaltime - prevtotaltime);
 
-    s->cpu[i].nonidle = nonidlealltime;
-    s->cpu[i].idle = idlealltime;
+    info->cpu[i].nonidle = nonidlealltime;
+    info->cpu[i].idle = idlealltime;
   }
 }
 
-static void get_battery_capacity(struct info *s)
+static void get_battery_capacity(struct info *info)
 {
   int fd = open(DS_BATT "capacity", O_RDONLY);
   int n = 0;
   if (fd != -1) {
-    n = read(fd, s->ba_capacity, 4);
+    n = read(fd, info->ba_capacity, 4);
     close(fd);
   }
-  s->ba_capacity[n-1] = 0;
+  info->ba_capacity[n-1] = 0;
 }
 
-static void get_battery_status(struct info *s)
+static void get_battery_status(struct info *info)
 {
   int fd = open(DS_BATT "status", O_RDONLY);
   char c = 'U';
@@ -204,10 +204,10 @@ static void get_battery_status(struct info *s)
       close(fd);
     }
   }
-  s->ba_status = c;
+  info->ba_status = c;
 }
 
-static void get_mem(struct info *s)
+static void get_mem(struct info *info)
 {
   struct sysinfo m;
   sysinfo(&m);
@@ -219,11 +219,11 @@ static void get_mem(struct info *s)
     close(fd);
   }
   mema[9] = 0;
-  s->mem_total = m.totalram / 1024;
-  s->mem_avail = atol(mema);
+  info->mem_total = m.totalram / 1024;
+  info->mem_avail = atol(mema);
 }
 
-static void get_temp(struct info *s)
+static void get_temp(struct info *info)
 {
   int i, fd;
   char tmp[7];
@@ -234,27 +234,27 @@ static void get_temp(struct info *s)
       close(fd);
     }
     tmp[6] = 0;
-    s->temp[i] = atol(tmp) * 0x418938 >> 32;
+    info->temp[i] = atol(tmp) * 0x418938 >> 32;
   }
 }
 
-static void get_time(struct info *s)
+static void get_time(struct info *info)
 {
   time_t t;
   time(&t);
-  strftime(s->time, 122, DS_TIME_FORMAT, localtime(&t));
+  strftime(info->time, 122, DS_TIME_FORMAT, localtime(&t));
 }
 
-static void get_wireless(struct info *s)
+static void get_wireless(struct info *info)
 {
   struct iwreq wrq = {{DS_WIFACE}, {""}};
   int skfd = iw_sockets_open();
-  wrq.u.essid.pointer = (caddr_t) s->wi_essid;
+  wrq.u.essid.pointer = (caddr_t) info->wi_essid;
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;
   ioctl(skfd, SIOCGIWESSID, &wrq);
   if (ioctl(skfd, SIOCGIWRATE, &wrq) >= 0) {
-    s->wi_bitrate = wrq.u.bitrate.value;
+    info->wi_bitrate = wrq.u.bitrate.value;
   }
 }
 
@@ -269,7 +269,7 @@ static void *battery_status_monitor_thread(void *v)
 {
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
   struct conky_monitor *m = (struct conky_monitor *) v;
-  struct info *s = m->info;
+  struct info *info = m->info;
   int fd, ret;
   fd_set fds;
   static long TIMEOUT = 0x8000; /* Timeout ~ 9 minutes */
@@ -281,7 +281,7 @@ static void *battery_status_monitor_thread(void *v)
   fd = udev_monitor_get_fd(m->mon);
   pthread_cleanup_push(battery_cleanup, m);
 
-  get_battery_status(s);        /* Get status before blocking */
+  get_battery_status(info);     /* Get status before blocking */
 
   for (;;) {
     FD_ZERO(&fds);
@@ -292,10 +292,10 @@ static void *battery_status_monitor_thread(void *v)
     ret = select(fd+1, &fds, NULL, NULL, &tv);
     if (ret >= 0 && FD_ISSET(fd, &fds)) {
       usleep(500*1000);
-      get_battery_status(s);
-      if (s->ba_status == 'A') {
+      get_battery_status(info);
+      if (info->ba_status == 'A') {
         sleep(1);               /* Wait for /sys to update */
-        get_battery_status(s);
+        get_battery_status(info);
       }
     }
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
