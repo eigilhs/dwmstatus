@@ -1,20 +1,20 @@
-#define CL_STAT "/proc/stat"
-#define CL_MEM  "/proc/meminfo"
-#define CL_BATT "/sys/class/power_supply/BAT0/"
-#define CL_AC   "/sys/class/power_supply/AC/"
+#define DS_STAT "/proc/stat"
+#define DS_MEM  "/proc/meminfo"
+#define DS_BATT "/sys/class/power_supply/BAT0/"
+#define DS_AC   "/sys/class/power_supply/AC/"
 
-#define CL_WIFACE "wlan0"
-#define CL_INTERVAL 1           /* Update every INTERVAL seconds */
+#define DS_WIFACE "wlan0"
+#define DS_INTERVAL 1           /* Update every INTERVAL seconds */
 
-#define CL_TEMP_COUNT 3
-static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_input",
+#define DS_TEMP_COUNT 3
+static char *DS_TEMP_SENSORS[DS_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_input",
                                                "/sys/class/hwmon/hwmon2/temp2_input",
                                                "/sys/class/hwmon/hwmon2/temp4_input"};
 
-#define CL_TIME_FORMAT "%m-%V-%d %H:%M:%S"
+#define DS_TIME_FORMAT "%m-%V-%d %H:%M:%S"
 
-#define CL_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d °C :: %.2f G :: %s %llu :: %c %s %% :: %s"
-#define CL_ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,    \
+#define DS_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d °C :: %.2f G :: %s %llu :: %c %s %% :: %s"
+#define DS_ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,    \
     s->temp[0], s->temp[1], s->temp[2],                                            \
     (s->mem_total - s->mem_avail) / (float) 0x100000,                              \
     s->winfo->b.essid, (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32, \
@@ -30,7 +30,7 @@ static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_in
  * the amount of "available" memory.
  *
  * == TEMPERATURE ==
- * The value of the temperature sensors defined in CL_TEMP_SENSORS
+ * The value of the temperature sensors defined in DS_TEMP_SENSORS
  * can be read from s->temp[i] where "i" is the index of the sensor.
  *
  * == WIFI ==
@@ -42,6 +42,6 @@ static char *CL_TEMP_SENSORS[CL_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_in
  * fully charged, and 'A' when on AC but not charging.
  *
  * == TIME ==
- * A string with current localtime formatted as described in CL_TIME_FORMAT
+ * A string with current localtime formatted as described in DS_TIME_FORMAT
  * can be found in s->time.
  */

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-APPNAME = 'conkylite'
+APPNAME = 'dwmstatus'
 VERSION = '0.0'
 
 top = '.'
@@ -32,7 +32,7 @@ def configure(ctx):
         ctx.check_cc(lib=lib, cflags=ctx.env.CFLAGS, uselib_store='L', mandatory=True)
 
 def build(bld):
-    bld.program(source='src/conkylite.c',
+    bld.program(source='src/dwmstatus.c',
                 includes='.',
-                target='conkylite',
+                target='dwmstatus',
                 use='L')

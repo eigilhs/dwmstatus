@@ -33,7 +33,7 @@ int main(void)
   while (!sig_status) {
     update(&s);
     set_root_name(&s);
-    sleep(CL_INTERVAL);
+    sleep(DS_INTERVAL);
   }
   
   stop_monitors(monitors, nt);
@@ -54,7 +54,7 @@ static void update(struct info *s)
 static void set_root_name(struct info *s)
 {
   char name[256];
-  snprintf(name, 256, CL_FORMATSTRING, CL_ARGS);
+  snprintf(name, 256, DS_FORMATSTRING, DS_ARGS);
   Display *dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(dpy);
   Window root = RootWindow(dpy, screen);
@@ -67,7 +67,7 @@ static void info_create(struct info *s)
   s->winfo = malloc(sizeof(struct wireless_info));
   s->ba_status = 'U';
   int i;
-  for (i = 0; i < CL_CPU_COUNT+1; i++)
+  for (i = 0; i < DS_CPU_COUNT+1; i++)
     s->cpu[i].idle = s->cpu[i].nonidle = 0;
 }
 
@@ -148,14 +148,14 @@ static void get_cpu_usage(struct info *s)
   unsigned long long nonidlealltime, prevnonidle, previdle, prevtotaltime;
   int i;
   char tmp[512];
-  int fd = open(CL_STAT, O_RDONLY);
+  int fd = open(DS_STAT, O_RDONLY);
   if (fd != -1) {
       lseek(fd, 5, SEEK_CUR);
       read(fd, tmp, 512);
       close(fd);
   }
   tmp[511] = 0;
-  for (i = 0; i < CL_CPU_COUNT + 1; i++) {
+  for (i = 0; i < DS_CPU_COUNT + 1; i++) {
     extract_cpu_times(i == 0 ? tmp : NULL, 10, &usertime, &nicetime,
                       &systemtime, &idletime, &ioWait, &irq, &softIrq,
                       &steal, &guest, &guestnice);
@@ -180,7 +180,7 @@ static void get_cpu_usage(struct info *s)
 
 static void get_battery_capacity(struct info *s)
 {
-  int fd = open(CL_BATT "capacity", O_RDONLY);
+  int fd = open(DS_BATT "capacity", O_RDONLY);
   int n = 0;
   if (fd != -1) {
     n = read(fd, s->ba_capacity, 4);
@@ -191,14 +191,14 @@ static void get_battery_capacity(struct info *s)
 
 static void get_battery_status(struct info *s)
 {
-  int fd = open(CL_BATT "status", O_RDONLY);
+  int fd = open(DS_BATT "status", O_RDONLY);
   char c = 'U';
   if (fd != -1) {
     read(fd, &c, 1);
     close(fd);
   }
   if (c == 'U') {
-    fd = open(CL_AC "online", O_RDONLY);
+    fd = open(DS_AC "online", O_RDONLY);
     if (fd != -1) {
       read(fd, &c, 1);
       switch (c) {
@@ -217,7 +217,7 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
-  int fd = open(CL_MEM, O_RDONLY);
+  int fd = open(DS_MEM, O_RDONLY);
   char mema[10], memt[10];
   if (fd != -1) {
     lseek(fd, 15, SEEK_CUR);
@@ -235,8 +235,8 @@ static void get_temp(struct info *s)
 {
   int i, fd;
   char tmp[7];
-  for (i = 0; i < CL_TEMP_COUNT; i++) {
-    fd = open(CL_TEMP_SENSORS[i], O_RDONLY);
+  for (i = 0; i < DS_TEMP_COUNT; i++) {
+    fd = open(DS_TEMP_SENSORS[i], O_RDONLY);
     if (fd != -1) {
       read(fd, tmp, 6);
       close(fd);
@@ -250,14 +250,14 @@ static void get_time(struct info *s)
 {
   time_t t;
   time(&t);
-  strftime(s->time, 128, CL_TIME_FORMAT, localtime(&t));
+  strftime(s->time, 128, DS_TIME_FORMAT, localtime(&t));
 }
 
 static void get_wireless(struct info *s)
 {
   struct iwreq wrq;
   int skfd = iw_sockets_open();
-  char iface[] = CL_WIFACE;
+  char iface[] = DS_WIFACE;
   wrq.u.essid.pointer = (caddr_t) s->winfo->b.essid;
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;

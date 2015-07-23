@@ -1,5 +1,5 @@
-#ifndef CL_CPU_COUNT
-#define CL_CPU_COUNT 2
+#ifndef DS_CPU_COUNT
+#define DS_CPU_COUNT 2
 #endif
 
 struct cpu {
@@ -10,10 +10,10 @@ struct cpu {
 
 struct info {
   struct wireless_info *winfo;
-  struct cpu cpu[CL_CPU_COUNT+1];
+  struct cpu cpu[DS_CPU_COUNT+1];
   unsigned int mem_total;
   unsigned int mem_avail;
-  unsigned int temp[CL_TEMP_COUNT];
+  unsigned int temp[DS_TEMP_COUNT];
   char time[128];
   char ba_capacity[4];
   char ba_status;
