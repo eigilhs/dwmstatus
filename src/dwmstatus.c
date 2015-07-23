@@ -11,7 +11,7 @@
 #include <X11/Xutil.h>
 
 #include "config.h"
-#include "conkylite.h"
+#include "dwmstatus.h"
 
 static volatile sig_atomic_t sig_status;
 
