@@ -257,9 +257,9 @@ static void get_wireless(struct info *info)
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;
   ioctl(skfd, SIOCGIWESSID, &wrq);
-  if (ioctl(skfd, SIOCGIWRATE, &wrq) >= 0) {
+  if (ioctl(skfd, SIOCGIWRATE, &wrq) >= 0)
     info->wi_bitrate = wrq.u.bitrate.value;
-  }
+  iw_sockets_close(skfd);
 }
 
 static void battery_cleanup(void *v)
