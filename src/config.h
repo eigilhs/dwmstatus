@@ -4,21 +4,15 @@
 #define DS_AC   "/sys/class/power_supply/AC/"
 
 #define DS_WIFACE "wlan0"
-#define DS_INTERVAL 1           /* Update every INTERVAL seconds */
-
-#define DS_TEMP_COUNT 3
-static char *DS_TEMP_SENSORS[DS_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_input",
-                                               "/sys/class/hwmon/hwmon2/temp2_input",
-                                               "/sys/class/hwmon/hwmon2/temp4_input"};
+#define DS_INTERVAL 1000000 /* Update every DS_INTERVAL microseconds */
 
 #define DS_TIME_FORMAT "%m-%V-%d %H:%M:%S"
 
-#define DS_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d °C :: %.2f G :: %s %llu :: %c %s %% :: %s"
-#define DS_ARGS info->cpu[1].prct, info->cpu[2].prct, info->cpu[3].prct, \
-    info->cpu[4].prct, info->temp[0], info->temp[1], info->temp[2],      \
-    (info->mem_total - info->mem_avail) / (float) 0x100000,              \
-    info->wi_essid, (unsigned long long) info->wi_bitrate * 0x219 >> 32, \
-    info->ba_status, info->ba_capacity, info->time
+#define DS_FORMATSTRING "%u / %u / %u / %u :: %d / %d / %d °C :: %.2f G :: %s %d :: %c %s %% :: %s"
+#define DS_ARGS info->cpu[1].prct, info->cpu[2].prct, info->cpu[3].prct,    \
+    info->cpu[4].prct, info->temp[0], info->temp[1], info->temp[2],         \
+    (info->mem_total - info->mem_avail) / (float) 0x100000, info->wi_essid, \
+    info->wi_bitrate / 80000000, info->ba_status, info->ba_capacity, info->time
 
 /* == CPU ==
  * CPU load info is stored in info->cpu[0].prct through info->cpu[N+1].prct

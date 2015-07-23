@@ -34,7 +34,7 @@ int main(void)
   while (!sig_status) {
     update(&info);
     set_root_name(&info);
-    sleep(DS_INTERVAL);
+    usleep(DS_INTERVAL);
   }
   
   stop_monitors(monitors, nt);
@@ -45,8 +45,12 @@ static void update(struct info *info)
 {
   get_temp(info);
   get_mem(info);
+#ifndef DS_NO_WIFI
   get_wireless(info);
+#endif
+#ifndef DS_NO_BATTERY
   get_battery_capacity(info);
+#endif
   get_cpu_usage(info);
   get_time(info);
 }
@@ -234,7 +238,7 @@ static void get_temp(struct info *info)
       close(fd);
     }
     tmp[6] = 0;
-    info->temp[i] = atol(tmp) * 0x418938 >> 32;
+    info->temp[i] = atol(tmp) / 1000;
   }
 }
 
