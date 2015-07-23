@@ -9,6 +9,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <sys/sysinfo.h>
 
 #include "config.h"
 #include "dwmstatus.h"
@@ -56,9 +57,7 @@ static void set_root_name(struct info *s)
   char name[256];
   snprintf(name, 256, DS_FORMATSTRING, DS_ARGS);
   Display *dpy = XOpenDisplay(NULL);
-  int screen = DefaultScreen(dpy);
-  Window root = RootWindow(dpy, screen);
-  XStoreName(dpy, root, name);
+  XStoreName(dpy, RootWindow(dpy, DefaultScreen(dpy)), name);
   XCloseDisplay(dpy);
 }
 
@@ -162,7 +161,7 @@ static void get_cpu_usage(struct info *s)
     systemalltime = systemtime + irq + softIrq;
     virtalltime = guest + guestnice;
     idlealltime = idletime + ioWait;
-    nonidlealltime = usertime + nicetime + systemalltime + steal + guest + guestnice;
+    nonidlealltime = usertime + nicetime + systemalltime + steal + virtalltime;
     totaltime = nonidlealltime + idlealltime;
 
     prevnonidle = s->cpu[i].nonidle;
@@ -217,18 +216,18 @@ static void get_battery_status(struct info *s)
 
 static void get_mem(struct info *s)
 {
+  struct sysinfo m;
+  sysinfo(&m);
   int fd = open(DS_MEM, O_RDONLY);
-  char mema[10], memt[10];
+  char mema[10];
   if (fd != -1) {
-    lseek(fd, 15, SEEK_CUR);
-    read(fd, memt, 9);
-    lseek(fd, 49, SEEK_CUR);
+    lseek(fd, 73, SEEK_CUR);
     read(fd, mema, 9);
     close(fd);
   }
-  mema[9] = memt[9] = 0;
-  s->mem_total = atoi(memt);
-  s->mem_avail = atoi(mema);
+  mema[9] = 0;
+  s->mem_total = m.totalram / 1024;
+  s->mem_avail = atol(mema);
 }
 
 static void get_temp(struct info *s)
@@ -255,14 +254,13 @@ static void get_time(struct info *s)
 
 static void get_wireless(struct info *s)
 {
-  struct iwreq wrq;
+  struct iwreq wrq = {{DS_WIFACE}, {""}};
   int skfd = iw_sockets_open();
-  char iface[] = DS_WIFACE;
   wrq.u.essid.pointer = (caddr_t) s->winfo->b.essid;
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;
-  iw_get_ext(skfd, iface, SIOCGIWESSID, &wrq);
-  if (iw_get_ext(skfd, iface, SIOCGIWRATE, &wrq) >= 0) {
+  ioctl(skfd, SIOCGIWESSID, &wrq);
+  if (ioctl(skfd, SIOCGIWRATE, &wrq) >= 0) {
     memcpy(&(s->winfo->bitrate), &(wrq.u.bitrate), sizeof(iwparam));
   }
 }

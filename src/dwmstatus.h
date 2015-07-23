@@ -11,8 +11,8 @@ struct cpu {
 struct info {
   struct wireless_info *winfo;
   struct cpu cpu[DS_CPU_COUNT+1];
-  unsigned int mem_total;
-  unsigned int mem_avail;
+  unsigned long mem_total;
+  unsigned long mem_avail;
   unsigned int temp[DS_TEMP_COUNT];
   char time[128];
   char ba_capacity[4];
