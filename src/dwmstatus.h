@@ -24,7 +24,7 @@ struct info {
   char ba_status;
 };
 
-struct conky_monitor {
+struct ds_monitor {
   struct info *info;
   struct udev *udev;
   struct udev_monitor *mon;
@@ -41,8 +41,8 @@ static void get_battery_status(struct info *);
 static void catch_sigint(int);
 static void battery_cleanup(void *);
 static void *battery_status_monitor_thread(void *);
-static int start_monitors(struct info *, struct conky_monitor **);
-static void stop_monitors(struct conky_monitor *, int);
+static int start_monitors(struct info *, struct ds_monitor **);
+static void stop_monitors(struct ds_monitor *, int);
 static void update(struct info *);
 static void info_create(struct info *);
 static void set_root_name(struct info *);

@@ -24,7 +24,7 @@ static void catch_sigint(int signo)
 int main(void)
 {
   struct info info;
-  struct conky_monitor *monitors;
+  struct ds_monitor *monitors;
   int nt;
   info_create(&info);
   signal(SIGINT, catch_sigint);
@@ -72,10 +72,10 @@ static void info_create(struct info *info)
     info->cpu[i].idle = info->cpu[i].nonidle = 0;
 }
 
-static int start_monitors(struct info *info, struct conky_monitor **monitors)
+static int start_monitors(struct info *info, struct ds_monitor **monitors)
 {
   int NUMMONS = 1;
-  *monitors = malloc(sizeof(struct conky_monitor) * NUMMONS);
+  *monitors = malloc(sizeof(struct ds_monitor) * NUMMONS);
 
   (*monitors)[0].info = info;
   if (pthread_create(&(monitors[0]->thread), NULL,
@@ -87,7 +87,7 @@ static int start_monitors(struct info *info, struct conky_monitor **monitors)
   return NUMMONS;
 }
 
-static void stop_monitors(struct conky_monitor *monitors, int nt)
+static void stop_monitors(struct ds_monitor *monitors, int nt)
 {
   int i;
   for (i = 0; i < nt; i++) {
@@ -264,7 +264,7 @@ static void get_wireless(struct info *info)
 
 static void battery_cleanup(void *v)
 {
-  struct conky_monitor *m = (struct conky_monitor *) v;
+  struct ds_monitor *m = (struct ds_monitor *) v;
   udev_monitor_unref(m->mon);
   udev_unref(m->udev);
 }
@@ -272,7 +272,7 @@ static void battery_cleanup(void *v)
 static void *battery_status_monitor_thread(void *v)
 {
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-  struct conky_monitor *m = (struct conky_monitor *) v;
+  struct ds_monitor *m = (struct ds_monitor *) v;
   struct info *info = m->info;
   int fd, ret;
   fd_set fds;
