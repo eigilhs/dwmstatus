@@ -1,8 +1,3 @@
-#ifndef DS_CPU_COUNT
-#define DS_CPU_COUNT 2
-#endif
-
-#define DS_TEMP_COUNT 3
 static char *DS_TEMP_SENSORS[DS_TEMP_COUNT] = {DS_SENSORS};
 
 struct cpu {
