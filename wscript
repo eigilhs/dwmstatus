@@ -24,7 +24,7 @@ def configure(ctx):
     ctx.start_msg('Counting CPUS')
     from multiprocessing import cpu_count
     cpus = cpu_count()
-    ctx.env.DEFINES = ['CL_CPU_COUNT=%d' % cpus]
+    ctx.env.DEFINES = ['DS_CPU_COUNT=%d' % cpus]
     ctx.end_msg(cpus)
     ctx.load('compiler_c')
     ctx.check_cc(msg='Testing compiler', fragment="int main() { return 0; }\n", execute=True)
