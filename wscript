@@ -18,7 +18,7 @@ def configure(ctx):
     ctx.env.CFLAGS = ['-Wall', '-Wunused']
     if ctx.options.debug == 'True':
         print('=== DEBUG MODE ===')
-        ctx.env.CFLAGS.append('-g')
+        ctx.env.CFLAGS += ['-g', '-Wpadded']
     else:
         ctx.env.CFLAGS.append('-Ofast')
     ctx.start_msg('Counting CPUS')

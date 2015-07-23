@@ -38,7 +38,6 @@ int main(void)
   }
   
   stop_monitors(monitors, nt);
-  info_free(&s);
   return 0;
 }
 
@@ -63,16 +62,10 @@ static void set_root_name(struct info *s)
 
 static void info_create(struct info *s)
 {
-  s->winfo = malloc(sizeof(struct wireless_info));
   s->ba_status = 'U';
   int i;
   for (i = 0; i < DS_CPU_COUNT+1; i++)
     s->cpu[i].idle = s->cpu[i].nonidle = 0;
-}
-
-static void info_free(struct info *s)
-{
-  free(s->winfo);
 }
 
 static int start_monitors(struct info *s, struct conky_monitor **monitors)
@@ -249,19 +242,19 @@ static void get_time(struct info *s)
 {
   time_t t;
   time(&t);
-  strftime(s->time, 128, DS_TIME_FORMAT, localtime(&t));
+  strftime(s->time, 122, DS_TIME_FORMAT, localtime(&t));
 }
 
 static void get_wireless(struct info *s)
 {
   struct iwreq wrq = {{DS_WIFACE}, {""}};
   int skfd = iw_sockets_open();
-  wrq.u.essid.pointer = (caddr_t) s->winfo->b.essid;
+  wrq.u.essid.pointer = (caddr_t) s->wi_essid;
   wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   wrq.u.essid.flags = 0;
   ioctl(skfd, SIOCGIWESSID, &wrq);
   if (ioctl(skfd, SIOCGIWRATE, &wrq) >= 0) {
-    memcpy(&(s->winfo->bitrate), &(wrq.u.bitrate), sizeof(iwparam));
+    s->wi_bitrate = wrq.u.bitrate.value;
   }
 }
 

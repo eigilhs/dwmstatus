@@ -6,15 +6,17 @@ struct cpu {
   unsigned long long idle;
   unsigned long long nonidle;
   unsigned int prct;
+  unsigned int __padding;
 };
 
 struct info {
-  struct wireless_info *winfo;
   struct cpu cpu[DS_CPU_COUNT+1];
   unsigned long mem_total;
   unsigned long mem_avail;
   unsigned int temp[DS_TEMP_COUNT];
-  char time[128];
+  int wi_bitrate;
+  char wi_essid[IW_ESSID_MAX_SIZE + 1];
+  char time[122];
   char ba_capacity[4];
   char ba_status;
 };
@@ -40,6 +42,5 @@ static int start_monitors(struct info *, struct conky_monitor **);
 static void stop_monitors(struct conky_monitor *, int);
 static void update(struct info *);
 static void info_create(struct info *);
-static void info_free(struct info *);
 static void set_root_name(struct info *);
 static void extract_cpu_times(char *, int, ...);

@@ -17,7 +17,7 @@ static char *DS_TEMP_SENSORS[DS_TEMP_COUNT] = {"/sys/class/hwmon/hwmon0/temp1_in
 #define DS_ARGS s->cpu[1].prct, s->cpu[2].prct, s->cpu[3].prct, s->cpu[4].prct,    \
     s->temp[0], s->temp[1], s->temp[2],                                            \
     (s->mem_total - s->mem_avail) / (float) 0x100000,                              \
-    s->winfo->b.essid, (unsigned long long) s->winfo->bitrate.value * 0x219 >> 32, \
+    s->wi_essid, (unsigned long long) s->wi_bitrate * 0x219 >> 32,                 \
     s->ba_status, s->ba_capacity, s->time
 
 /* == CPU ==
