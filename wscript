@@ -32,8 +32,7 @@ def configure(ctx):
     ctx.start_msg('Finding temperature sensors')
     from glob import glob
     sensors = glob('/sys/class/hwmon/hwmon*/temp*_input')
-    if sensors:
-        ctx.env.DEFINES += ['DS_TEMP_COUNT=%d' % len(sensors),
+    ctx.env.DEFINES += ['DS_TEMP_COUNT=%d' % len(sensors),
                     'DS_SENSORS=%s' % '\"' + '\", \"'.join(sensors) + '\"']
     ctx.end_msg(len(sensors))
 
