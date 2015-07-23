@@ -33,7 +33,8 @@ def configure(ctx):
     from glob import glob
     sensors = glob('/sys/class/hwmon/hwmon*/temp*_input')
     ctx.env.DEFINES += ['DS_TEMP_COUNT=%d' % len(sensors),
-                    'DS_SENSORS=%s' % '\"' + '\", \"'.join(sensors) + '\"']
+                        'DS_SENSORS%s' % ('=\"' + '\", \"'.join(sensors)
+                                           + '\"' if sensors else '')]
     ctx.end_msg(len(sensors))
 
     ctx.start_msg('Checking for battery')
