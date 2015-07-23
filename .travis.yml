@@ -1,8 +1,13 @@
 language: c
 
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y libiw-dev libudev-dev libx11-dev
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libiw-dev
+      - libudev-dev
+      - libx11-dev
 
 compiler:
   - clang
