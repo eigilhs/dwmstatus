@@ -1,5 +1,5 @@
 # dwmstatus
-[![Travis-CI](https://travis-ci.org/skjvlnd/dwmstatus.svg?branch=master)](https://travis-ci.org/skjvlnd/dwmstatus)
+[![Travis-CI](https://travis-ci.org/eigilhs/dwmstatus.svg?branch=master)](https://travis-ci.org/eigilhs/dwmstatus)
 
 Small daemon for updating the [dwm](http://dwm.suckless.org/)
 status bar. Very untested.
