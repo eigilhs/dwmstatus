@@ -45,7 +45,7 @@ def configure(ctx):
 
     ctx.start_msg('Checking for wifi')
     import os
-    has_wifi = os.path.islink('/sys/class/net/wlan0')
+    has_wifi = bool(glob('/sys/class/net/wl*'))
     if not has_wifi:
         ctx.env.DEFINES.append('DS_NO_WIFI')
     ctx.end_msg(has_wifi)

@@ -15,7 +15,7 @@ struct info {
   int wi_bitrate;
   char wi_essid[IW_ESSID_MAX_SIZE + 1];
   char time[122];
-  char ba_capacity[4];
+  char ba_capacity[2][4];
   char ba_status;
 };
 

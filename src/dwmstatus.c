@@ -176,13 +176,15 @@ static void get_cpu_usage(struct info *info)
 
 static void get_battery_capacity(struct info *info)
 {
-  int fd = open(DS_BATT "capacity", O_RDONLY);
-  int n = 0;
-  if (fd != -1) {
-    n = read(fd, info->ba_capacity, 4);
-    close(fd);
-  }
-  info->ba_capacity[n-1] = 0;
+        int i, n = 0, fd;
+        for (i = 0; i < sizeof(DS_BATTERIES) / sizeof(DS_BATTERIES[0]); ++i) {
+                fd = open(DS_BATTERIES[i], O_RDONLY);
+                if (fd != -1) {
+                        n = read(fd, &info->ba_capacity[i], 4);
+                        close(fd);
+                }
+                info->ba_capacity[i][n-1] = 0;
+        }
 }
 
 static void get_battery_status(struct info *info)
@@ -218,7 +220,7 @@ static void get_mem(struct info *info)
   int fd = open(DS_MEM, O_RDONLY);
   char mema[10];
   if (fd != -1) {
-    lseek(fd, 73, SEEK_CUR);
+    lseek(fd, 72, SEEK_CUR);
     read(fd, mema, 9);
     close(fd);
   }
